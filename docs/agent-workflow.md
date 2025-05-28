@@ -1,6 +1,7 @@
 # Conversational Agent Workflow
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 This document describes how the n8n workflow uses a dedicated AI agent to gather requirements, produce WordPress content, and manage customer feedback.
 
 1. **Lead Capture** – Customers fill out a form or call a voice line that hits the `Incoming Webhook` node.
@@ -15,6 +16,8 @@ This document describes how the n8n workflow uses a dedicated AI agent to gather
 Customize this flow by adding additional nodes—for example, Stripe payment collection, PDF proposal generation, or ongoing maintenance checks.
 
 =======
+=======
+>>>>>>> 0tbjbg-codex/design-ai-powered-automated-creative-agency-workflow
 This document describes the n8n workflow that automates the end‑to‑end creation of a WordPress site using WP Engine. Customers interact with a dedicated AI agent for requirements gathering and feedback.
 
 1. **Lead Capture** – Customers submit a form or leave a voice message that triggers the `Incoming Webhook` node.
@@ -28,4 +31,7 @@ This document describes the n8n workflow that automates the end‑to‑end creat
 9. **Final Invoice & Deployment** – Once the customer is satisfied a final Stripe invoice is generated. The site is deployed to production and the customer receives a final notification.
 
 Import the workflow from `workflows/automated-agency-v2.json` in n8n to experiment with this automated process. Adjust the nodes and prompts to suit your specific services and style.
+<<<<<<< HEAD
+>>>>>>> 0tbjbg-codex/design-ai-powered-automated-creative-agency-workflow
+=======
 >>>>>>> 0tbjbg-codex/design-ai-powered-automated-creative-agency-workflow
