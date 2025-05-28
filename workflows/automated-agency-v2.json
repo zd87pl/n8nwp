@@ -1,0 +1,236 @@
+{
+  "name": "Automated WordPress Agency v2",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "Incoming Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "parameters": {
+        "path": "site-request",
+        "httpMethod": "POST"
+      },
+      "position": [300, 100]
+    },
+    {
+      "id": 2,
+      "name": "Speech To Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {
+        "url": "https://speech.googleapis.com/v1/speech:recognize",
+        "method": "POST",
+        "sendBinaryData": true,
+        "binaryPropertyName": "audio"
+      },
+      "position": [500, 100]
+    },
+    {
+      "id": 3,
+      "name": "Summarize Requirements",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-4",
+        "messages": [
+          {"role": "system", "content": "Summarize requirements and ask clarifying questions."},
+          {"role": "user", "content": "={{$json[\"transcript\"]}}"}
+        ]
+      },
+      "position": [700, 100]
+    },
+    {
+      "id": 4,
+      "name": "Generate Project Plan",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-4",
+        "messages": [
+          {"role": "system", "content": "Create a project plan and cost estimate."},
+          {"role": "user", "content": "={{$json[\"summary\"]}}"}
+        ]
+      },
+      "position": [900, 100]
+    },
+    {
+      "id": 5,
+      "name": "Send Proposal",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "parameters": {
+        "to": "={{$json[\"customerEmail\"]}}",
+        "subject": "Project Proposal",
+        "text": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"
+      },
+      "position": [1100, 100]
+    },
+    {
+      "id": 6,
+      "name": "Wait for Approval",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1300, 100]
+    },
+    {
+      "id": 7,
+      "name": "Create Checkout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {
+        "url": "https://api.stripe.com/v1/checkout/sessions",
+        "method": "POST",
+        "jsonParameters": true,
+        "body": {"amount": 50000, "currency": "usd"}
+      },
+      "position": [1500, 100]
+    },
+    {
+      "id": 8,
+      "name": "Create Staging Site",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {
+        "url": "https://api.wpengine.com/v1/sites",
+        "method": "POST",
+        "jsonParameters": true,
+        "body": {"name": "={{$json[\"customer\"]}}-staging"}
+      },
+      "position": [1700, 100]
+    },
+    {
+      "id": 9,
+      "name": "Generate Content",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-4",
+        "messages": [
+          {"role": "system", "content": "Create website content based on the project plan."},
+          {"role": "user", "content": "={{$json[\"plan\"]}}"}
+        ]
+      },
+      "position": [1900, 100]
+    },
+    {
+      "id": 10,
+      "name": "Upload to WordPress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {
+        "url": "https://{{wpengine_url}}/wp-json/wp/v2/posts",
+        "method": "POST",
+        "jsonParameters": true,
+        "body": {
+          "title": "Home",
+          "content": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"
+        }
+      },
+      "position": [2100, 100]
+    },
+    {
+      "id": 11,
+      "name": "Notify Prototype",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "parameters": {
+        "to": "={{$json[\"customerEmail\"]}}",
+        "subject": "Prototype Ready",
+        "text": "Please review your website at {{staging_url}}"
+      },
+      "position": [2300, 100]
+    },
+    {
+      "id": 12,
+      "name": "Wait for Feedback",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2500, 100]
+    },
+    {
+      "id": 13,
+      "name": "Summarize Feedback",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-4",
+        "messages": [
+          {"role": "system", "content": "Summarize customer feedback and list required changes."},
+          {"role": "user", "content": "={{$json[\"feedback\"]}}"}
+        ]
+      },
+      "position": [2700, 100]
+    },
+    {
+      "id": 14,
+      "name": "Update WordPress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {
+        "url": "https://{{wpengine_url}}/wp-json/wp/v2/posts/1",
+        "method": "PUT",
+        "jsonParameters": true,
+        "body": {"content": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"}
+      },
+      "position": [2900, 100]
+    },
+    {
+      "id": 15,
+      "name": "Create Final Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {
+        "url": "https://api.stripe.com/v1/invoices",
+        "method": "POST",
+        "jsonParameters": true,
+        "body": {"customer": "={{$json[\"customerId\"]}}"}
+      },
+      "position": [3100, 100]
+    },
+    {
+      "id": 16,
+      "name": "Deploy to Production",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "parameters": {
+        "url": "https://api.wpengine.com/v1/sites/{{staging_id}}/deploys",
+        "method": "POST"
+      },
+      "position": [3300, 100]
+    },
+    {
+      "id": 17,
+      "name": "Final Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "parameters": {
+        "to": "={{$json[\"customerEmail\"]}}",
+        "subject": "Site Live",
+        "text": "Your website is live at {{production_url}}"
+      },
+      "position": [3500, 100]
+    }
+  ],
+  "connections": {
+    "Incoming Webhook": {"main": [[{"node": "Speech To Text", "type": "main", "index": 0}]]},
+    "Speech To Text": {"main": [[{"node": "Summarize Requirements", "type": "main", "index": 0}]]},
+    "Summarize Requirements": {"main": [[{"node": "Generate Project Plan", "type": "main", "index": 0}]]},
+    "Generate Project Plan": {"main": [[{"node": "Send Proposal", "type": "main", "index": 0}]]},
+    "Send Proposal": {"main": [[{"node": "Wait for Approval", "type": "main", "index": 0}]]},
+    "Wait for Approval": {"main": [[{"node": "Create Checkout", "type": "main", "index": 0}]]},
+    "Create Checkout": {"main": [[{"node": "Create Staging Site", "type": "main", "index": 0}]]},
+    "Create Staging Site": {"main": [[{"node": "Generate Content", "type": "main", "index": 0}]]},
+    "Generate Content": {"main": [[{"node": "Upload to WordPress", "type": "main", "index": 0}]]},
+    "Upload to WordPress": {"main": [[{"node": "Notify Prototype", "type": "main", "index": 0}]]},
+    "Notify Prototype": {"main": [[{"node": "Wait for Feedback", "type": "main", "index": 0}]]},
+    "Wait for Feedback": {"main": [[{"node": "Summarize Feedback", "type": "main", "index": 0}]]},
+    "Summarize Feedback": {"main": [[{"node": "Update WordPress", "type": "main", "index": 0}]]},
+    "Update WordPress": {"main": [[{"node": "Create Final Invoice", "type": "main", "index": 0}]]},
+    "Create Final Invoice": {"main": [[{"node": "Deploy to Production", "type": "main", "index": 0}]]},
+    "Deploy to Production": {"main": [[{"node": "Final Notification", "type": "main", "index": 0}]]}
+  }
+}
